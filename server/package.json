@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "@clerk/express": "^1.7.57",
+    "@imagekit/nodejs": "^7.1.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
