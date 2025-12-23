@@ -104,7 +104,7 @@ export const updateUserData = async (req, res) => {
 export const discoverUsers = async (req, res) => {
      try {
           const { userId } = req.auth();
-          const { input } = req.body();
+          const { input } = req.body;
 
           const allUsers = await User.find(
                {
@@ -131,7 +131,7 @@ export const discoverUsers = async (req, res) => {
 export const followUser = async (req, res) => {
      try {
           const { userId } = req.auth();
-          const { id } = req.body();
+          const { id } = req.body;
 
           const user = await User.findById(userId);
 
@@ -158,7 +158,7 @@ export const followUser = async (req, res) => {
 export const unfollowUser = async (req, res) => {
      try {
           const { userId } = req.auth();
-          const { id } = req.body();
+          const { id } = req.body;
 
           const user = await User.findById(userId);
           user.following = user.following.filter(user => user !== id);
