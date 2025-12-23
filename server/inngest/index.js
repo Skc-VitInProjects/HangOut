@@ -1,7 +1,7 @@
 import { Inngest } from "inngest";
 import User from "../models/User.js";
 import Connection from "../models/Connection.js";
-import sendEmail from "../configs/nodemailer.js";
+import sendEmail from "../configs/nodeMailer.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "hangout-app" });
