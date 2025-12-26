@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Connection from "../models/Connection.js";
 import Post from "../models/Post.js"
 import fs from 'fs';
+import { inngest } from "../inngest/index.js";
 
 // Get user Data using userId
 export const getUserData = async (req, res) => {
@@ -203,9 +204,14 @@ export const sendConnectionRequest = async (req, res) => {
           })
 
           if(!connection){
-               await Connection.create({
+              const newConnection =  await Connection.create({
                     from_user_id: userId,
                     to_user_id: id
+               })
+               
+               await inngest.send({
+                   name: 'app/connection-request',
+                   data: {connectionId: newConnection._id}
                })
 
                return res.json({success: true, message: 'Connection request sent successfully'})
