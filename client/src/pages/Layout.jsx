@@ -4,10 +4,11 @@ import Sidebar from '../components/Sidebar'
 import { Outlet } from 'react-router-dom'
 import { dummyUserData } from '../assets/assets'
 import Loading from '../components/Loading'
+import {useSelector} from 'react-redux'
 
 const Layout = () => {
 
-   const user = dummyUserData
+   const user = useSelector((state)=> state.user.value)
 
   const [sidebarOpen , setSidebarOpen] = useState(false)
   
