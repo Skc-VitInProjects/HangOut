@@ -62,7 +62,7 @@ Hangout solves this problem by providing a direct, chronological, and distractio
 *Figure 2: Real-time private chat UI with support for image attachments.*
 
 ![Connection Manager](docs/screenshots/connections_panel.png)
-*Figure 3: Connection request system, displaying mutual friends, pending requests, and followers.*
+*Figure 3: Connection request system, displaying mutual friends, pending requests, and followers.* 
 ```
 
 ---
@@ -245,7 +245,7 @@ sequenceDiagram
 
 ### Clone the Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/Skc-VitInProjects/HangOut.git
 cd HangOut
 ```
 
@@ -546,7 +546,7 @@ We welcome contributions to Hangout! To contribute:
 
 ## 21. Credits and Acknowledgements
 
-*   **Project Developer:** [Add contributor name]
+*   **Project Developer:** [Skand Kumar Choubey](https://github.com/Skc-VitInProjects)
 *   **Libraries and Services:**
     *   Auth: [Clerk](https://clerk.com)
     *   Database Engine: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
@@ -564,12 +564,12 @@ This repository currently does not include an explicit open-source license.
 
 ## 23. Contact
 
-*   **GitHub:** [Add GitHub Profile Link]
-*   **LinkedIn:** [Add LinkedIn Profile Link]
-*   **Email:** [Add Contact Email]
+*   **GitHub:** [https://github.com/Skc-VitInProjects]
+*   **LinkedIn:** [https://www.linkedin.com/in/skandkc/]
+*   **Email:** [iskc9555@gmail.com]
 
 ---
-
+ 
 ## 24. Star the Project
 
 If you find this project helpful, please give it a star! ⭐ It helps others discover the project. For bugs, features, or suggestions, feel free to open an issue.
