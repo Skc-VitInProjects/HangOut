@@ -1,69 +1,118 @@
 import fs from 'fs'
-import imagekit from '../configs/imageKit.js';
-import Story from '../models/Story.js';
-import User from '../models/User.js';
-import { inngest } from '../inngest/index.js';
+import imagekit from '../configs/imageKit.js'
+import Story from '../models/Story.js'
+import User from '../models/User.js'
+import { inngest } from '../inngest/index.js'
 
 // Add User Story
-export const addUserStory = async (req , res) => {
-     try{
-        const {userId} = req.auth();
-        const {content, media_type, background_color} = req.body;
-        const media = req.file
+export const addUserStory = async (req, res) => {
+  let mediaPath = null
 
-        let media_url = ''
-        
-        // upload media to imagekit
-        if(media_type === 'image' || media_type === 'video'){
-           const fileBuffer = fs.readFileSync(media.path)
-           const response = await imagekit.upload({
-               file: fileBuffer,
-               fileName: media.originalname,
-           })
+  try {
+    const { userId } = req.auth()
+    const {
+      content = '',
+      media_type = 'text',
+      background_color
+    } = req.body
 
-           media_url = response.url   
-        }
+    const media = req.file
+    let media_url = ''
 
-        //create story
-        const story = await Story.create({
-          user: userId,
-          content,
-          media_url,
-          media_type,
-          background_color,
+    const hasMedia =
+      media_type === 'image' || media_type === 'video'
+
+    if (hasMedia) {
+      if (!media) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide an image or video file'
         })
-       
-        // schedule story deletion after 24 hours
-        await inngest.send({
-          name: 'app/story.delete',
-          data: {storyId: story._id}
-        })
+      }
 
-        res.json({success: true})
+      mediaPath = media.path
 
-     } catch (error){
-          console.log(error);
-          res.json({success: false, message: error.message});
-     }
+      const response = await imagekit.files.upload({
+        file: fs.createReadStream(media.path),
+        fileName: media.originalname,
+        folder: '/stories'
+      })
+
+      media_url = response.url
+    }
+
+    const story = await Story.create({
+      user: userId,
+      content,
+      media_url,
+      media_type,
+      background_color
+    })
+
+    await inngest.send({
+      name: 'app/story.delete',
+      data: {
+        storyId: story._id.toString()
+      }
+    })
+
+    return res.status(201).json({
+      success: true,
+      message: 'Story added successfully',
+      story
+    })
+  } catch (error) {
+    console.error('Add story error:', error)
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Unable to add story'
+    })
+  } finally {
+    if (mediaPath && fs.existsSync(mediaPath)) {
+      fs.unlinkSync(mediaPath)
+    }
+  }
 }
 
 // Get User Stories
-export const getStories = async (req , res) => {
-     try{
-         const {userId} = req.auth();
-         const user = await User.findById(userId)
+export const getStories = async (req, res) => {
+  try {
+    const { userId } = req.auth()
 
-         // User connections and followings
-         const userIds = [userId, ...user.connections, ...user.following]
+    const user = await User.findById(userId)
 
-         const stories = await Story.find({
-             user: {$in: userIds}
-         }).populate('user').sort({createdAt: -1});
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      })
+    }
 
-          res.json({success: true, stories});
+    const userIds = [
+      userId,
+      ...(user.connections || []),
+      ...(user.following || [])
+    ]
 
-     } catch (error){
-          console.log(error);
-          res.json({success: false, message: error.message});
-     }
+    const stories = await Story.find({
+      user: {
+        $in: userIds
+      }
+    })
+      .populate('user')
+      .sort({ createdAt: -1 })
+
+    return res.json({
+      success: true,
+      stories
+    })
+  } catch (error) {
+    console.error('Get stories error:', error)
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Unable to fetch stories'
+    })
+  }
 }
