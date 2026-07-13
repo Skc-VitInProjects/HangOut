@@ -50,7 +50,7 @@ Hangout solves this problem by providing a direct, chronological, and distractio
 
 ## 3. Demo and Screenshots
 
-*   **Live Deployed Application:** [Add deployed application URL]
+*   **Live Deployed Application:** [(https://hang-out-teal.vercel.app/)] 
 *   **Video Demo / Walkthrough:** [Add walkthrough URL]
 
 ```md
