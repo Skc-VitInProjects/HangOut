@@ -31,7 +31,7 @@ const App = () => {
     if(user){
       const token = await getToken()
       dispatch(fetchUser(token))
-      dispatch(fetchConnections())
+      dispatch(fetchConnections(token))
     }
   }
 

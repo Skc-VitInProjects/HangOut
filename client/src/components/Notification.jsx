@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
 const Notification = ({t, message}) => {
      const navigate = useNavigate()

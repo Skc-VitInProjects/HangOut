@@ -27,7 +27,7 @@ const messagesSlice = createSlice({
                state.messages = [...state.messages, action.payload]
           },
 
-          resetMessages: (state, action) => {
+          resetMessages: (state) => {
                state.messages = [];
           },
 

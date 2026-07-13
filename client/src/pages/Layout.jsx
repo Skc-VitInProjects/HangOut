@@ -2,7 +2,6 @@ import { Menu, X } from 'lucide-react'
 import React, {useState} from 'react'
 import Sidebar from '../components/Sidebar' 
 import { Outlet } from 'react-router-dom'
-import { dummyUserData } from '../assets/assets'
 import Loading from '../components/Loading'
 import {useSelector} from 'react-redux'
 
@@ -14,7 +13,7 @@ const Layout = () => {
   
   return user ?(
     <div className='w-full flex h-screen'>
-       <Sidebar sidebarOpen={setSidebarOpen} setSidebarOpen={setSidebarOpen}/>
+       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}/>
 
        <div className='flex-1 bg-slate-50'>
             <Outlet />

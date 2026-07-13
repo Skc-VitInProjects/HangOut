@@ -1,5 +1,4 @@
 import React from 'react'
-import { dummyConnectionsData } from '../assets/assets'
 import { Search } from 'lucide-react'
 import UserCard from '../components/UserCard'
 import Loading from '../components/Loading'
@@ -8,7 +7,7 @@ import { useDispatch } from 'react-redux'
 import {fetchUser} from '../features/user/userSlice.js'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'   // or wherever useAuth comes from
-import { toast } from 'react-hot-toast'
+import toast  from 'react-hot-toast'
 
 const Discover = () => {
 
@@ -32,7 +31,7 @@ const Discover = () => {
         setInput('')
 
       } catch (error) {
-         toast.error(data.message)
+         toast.error(error.message)
       }
 
       setLoading(false)

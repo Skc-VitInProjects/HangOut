@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useAuth } from '@clerk/clerk-react'
 import { fetchConnections } from '../features/connections/connectionsSlice'
 import api from '../api/axios'
-  
+import toast from 'react-hot-toast'
 
 const Connections = () => {
   
@@ -15,8 +15,7 @@ const Connections = () => {
   const {getToken} = useAuth()
   const dispatch = useDispatch()
 
-  const {connections, pendingConnections, followers, following} = useSelector
-    ((state) => state.connections) 
+  const {connections, pendingConnections, followers, following} = useSelector((state) => state.connections) 
   
 
   const dataArray = [
@@ -117,8 +116,9 @@ const Connections = () => {
               <div className='flex-1'>
                 <p className='font-medium text-slate-700'>{user.full_name}</p>
                 <p className='text-slate-500'>@{user.username}</p>
-                <p className='text-sm text-gray-600'>{user.bio.slice(0, 30)}...</p>
-
+                <p className='text-sm text-gray-600'>
+                     {user.bio ? `${user.bio.slice(0, 30)}${user.bio.length > 30 ? '...' : ''}` : 'User has not added a bio yet.'}
+                </p>
                 <div className='flex max-sm:flex-col gap-2 mt-4'>
                    {
                     <button onClick={()=> navigate(`/profile/${user._id}`)}
