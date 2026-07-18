@@ -928,7 +928,7 @@ declare module "http" {
          * been transmitted are equal or not.
          *
          * Attempting to set a header field name or value that contains invalid characters
-         * will result in a \[`Error`\]\[\] being thrown.
+         * will result in a [`TypeError`](https://nodejs.org/docs/latest-v22.x/api/errors.html#class-typeerror) being thrown.
          * @since v0.1.30
          */
         writeHead(
@@ -1473,6 +1473,14 @@ declare module "http" {
          */
         keepAliveMsecs?: number | undefined;
         /**
+         * Milliseconds to subtract from the server-provided `keep-alive: timeout=...` hint when determining socket
+         * expiration time. This buffer helps ensure the agent closes the socket slightly before the server does, reducing
+         * the chance of sending a request on a socket that’s about to be closed by the server.
+         * @default 1000
+         * @since v22.20.0
+         */
+        agentKeepAliveTimeoutBuffer?: number | undefined;
+        /**
          * Maximum number of sockets to allow per host. Default for Node 0.10 is 5, default for Node 0.12 is Infinity
          */
         maxSockets?: number | undefined;
@@ -1600,7 +1608,7 @@ declare module "http" {
          * sockets. Do not modify.
          * @since v0.5.9
          */
-        readonly requests: NodeJS.ReadOnlyDict<IncomingMessage[]>;
+        readonly requests: NodeJS.ReadOnlyDict<ClientRequest[]>;
         constructor(opts?: AgentOptions);
         /**
          * Destroy any sockets that are currently in use by the agent.
