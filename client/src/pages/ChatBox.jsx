@@ -28,7 +28,7 @@ const ChatBox = () => {
 
   const messagesEndRef = useRef(null)
 
-  const fetchUserMessages = useCallback(async () => {
+  const fetchUserMessages = useCallback(async (silent = false) => {
     try {
       const token = await getToken()
 
@@ -39,7 +39,9 @@ const ChatBox = () => {
         })
       ).unwrap()
     } catch (error) {
-      toast.error(error.message || 'Unable to fetch messages')
+      if (!silent) {
+        toast.error(error.message || 'Unable to fetch messages')
+      }
     }
   }, [dispatch, getToken, userId])
 
@@ -86,7 +88,10 @@ const ChatBox = () => {
   useEffect(() => {
     fetchUserMessages()
 
+    const intervalId = setInterval(() => fetchUserMessages(true), 5000)
+
     return () => {
+      clearInterval(intervalId)
       dispatch(resetMessages())
     }
   }, [fetchUserMessages, dispatch])

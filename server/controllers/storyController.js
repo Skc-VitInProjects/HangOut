@@ -9,7 +9,7 @@ export const addUserStory = async (req, res) => {
   let mediaPath = null
 
   try {
-    const { userId } = req.auth()
+    const userId = req.userId
     const {
       content = '',
       media_type = 'text',
@@ -31,6 +31,15 @@ export const addUserStory = async (req, res) => {
       }
 
       mediaPath = media.path
+
+      const actualMediaType = media.mimetype.startsWith('image/') ? 'image' : 'video'
+
+      if (actualMediaType !== media_type) {
+        return res.status(400).json({
+          success: false,
+          message: 'Story media type does not match the uploaded file'
+        })
+      }
 
       const response = await imagekit.files.upload({
         file: fs.createReadStream(media.path),
@@ -78,7 +87,7 @@ export const addUserStory = async (req, res) => {
 // Get User Stories
 export const getStories = async (req, res) => {
   try {
-    const { userId } = req.auth()
+    const userId = req.userId
 
     const user = await User.findById(userId)
 
@@ -96,6 +105,7 @@ export const getStories = async (req, res) => {
     ]
 
     const stories = await Story.find({
+      expiresAt: { $gt: new Date() },
       user: {
         $in: userIds
       }

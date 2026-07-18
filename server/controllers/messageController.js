@@ -1,41 +1,35 @@
 import fs from 'fs';
 import imagekit from "../configs/imageKit.js";
 import Message from '../models/Message.js';
-
-// Create an empty object to store SS Event connections
-const connections = {};
-
-// Controller function for the SSE endpoint
-export const sseController = (req, res)=> {
-    const {userId} = req.params
-    console.log('New client connected : ', userId)
-
-    // Set SSE headers
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-
-    // Add the client's response object to the connections object
-    connections[userId] = res
-
-    // Send an initial event to the client
-    res.write('log: Connected to SSE stream\n\n');
-
-    // Handle client disconnection
-    req.on('close', ()=> {
-      // Remove the client's response object from the connections array
-      delete connections[userId];
-      console.log('Client disconnected');
-    })
-}
+import User from '../models/User.js';
 
 // Send Message
 export const sendMessage = async (req, res) => {
     try {
-       const {userId} = req.auth();
+       const userId = req.userId;
        const { to_user_id, text} = req.body;
        const image = req.file;
+
+       if (!to_user_id || (!text?.trim() && !image)) {
+          return res.status(400).json({success: false, message: 'Recipient and message content are required'});
+       }
+
+       if (to_user_id === userId) {
+          return res.status(400).json({success: false, message: 'You cannot message yourself'});
+       }
+
+       const [sender, recipient] = await Promise.all([
+          User.findById(userId),
+          User.findById(to_user_id),
+       ]);
+
+       if (!recipient) {
+          return res.status(404).json({success: false, message: 'Recipient not found'});
+       }
+
+       if (!sender?.connections?.includes(to_user_id)) {
+          return res.status(403).json({success: false, message: 'You can only message connections'});
+       }
 
        let media_url = '';
        let message_type = image ? 'image' : 'text';
@@ -60,60 +54,61 @@ export const sendMessage = async (req, res) => {
        const message = await Message.create({
           from_user_id: userId,
           to_user_id,
-          text,
+          text: text?.trim() || '',
           message_type,
           media_url
        })
 
        res.json({ success: true, message });
 
-       // Send message to to_user_id using SSE
-       const messageWithUserData = await Message.findById(message._id)
-          .populate('from_user_id');
-
-       if(connections[to_user_id]){
-            connections[to_user_id].write(`data: ${JSON.stringify
-               (messageWithUserData)}\n\n`)
-       }
-
     } catch (error) {
           console.log(error);
-          res.json({success: false, message: error.message });
+          res.status(500).json({success: false, message: 'Unable to send message' });
+    } finally {
+          if (req.file?.path && fs.existsSync(req.file.path)) {
+               fs.unlinkSync(req.file.path);
+          }
     }
 }
 
 // Get Chat Messages
 export const getChatMessages = async (req, res) => {
      try{
-        const {userId} = req.auth();
-        const {to_user_id} = req.body;
+        const currentUserId = req.userId;
+        const {userId} = req.params;
+
+        if (!userId) {
+           return res.status(400).json({success: false, message: 'User ID is required'});
+        }
 
         const messages = await Message.find({
            $or: [
-               {from_user_id: userId, to_user_id},
-               {from_user_id: to_user_id, to_user_id: userId },
+               {from_user_id: currentUserId, to_user_id: userId},
+               {from_user_id: userId, to_user_id: currentUserId },
            ]
-        }).sort({created_at: -1})
+        }).sort({createdAt: 1})
 
         // mark messages as seen
-        await Message.updateMany({from_user_id: to_user_id, to_user_id: userId},
+        await Message.updateMany({from_user_id: userId, to_user_id: currentUserId},
            {seen: true})
 
         res.json({ success: true, messages });
 
      } catch (error){
-          res.json({ success: false, message: error.message });
+          res.status(500).json({ success: false, message: 'Unable to fetch messages' });
      }
 }
 
 export const getUserRecentMessages = async (req, res)=> {
      try{
-        const { userId } = req.auth();
-        const messages = await Message.find({to_user_id: userId}).populate('from_user_id to_user_id')
-          .sort({ created_at: -1 });
+        const userId = req.userId;
+        const messages = await Message.find({
+          $or: [{to_user_id: userId}, {from_user_id: userId}],
+        }).populate('from_user_id to_user_id')
+          .sort({ createdAt: -1 });
         
         res.json({ success: true, messages});
      } catch (error) {
-          res.json({ success: false, message: error.message });
+          res.status(500).json({ success: false, message: 'Unable to fetch recent messages' });
      }
 }

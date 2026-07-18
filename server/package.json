@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=20 <23"
+  },
   "scripts": {
     "server": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "lint": "node --check server.js && node --check inngest/index.js && node --check controllers/userController.js && node --check controllers/postController.js && node --check controllers/storyController.js && node --check controllers/messageController.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +22,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "inngest": "^4.13.0",
+    "inngest": "4.13.0",
     "mongoose": "^9.0.1",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11"

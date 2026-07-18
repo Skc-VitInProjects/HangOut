@@ -3,21 +3,25 @@ import cors from "cors";
 import "dotenv/config";
 
 import connectDB from "./configs/db.js";
-// import { inngest, functions } from "./inngest/index.js";
-// import { serve } from "inngest/express";
+import { inngest, functions } from "./inngest/index.js";
+import { serve } from "inngest/express";
 import { clerkMiddleware } from "@clerk/express";
 
 import userRouter from "./routes/userRoutes.js";
 import postRouter from "./routes/postRoutes.js";
 import storyRouter from "./routes/storyRoutes.js";
 import messageRouter from "./routes/messageRoutes.js";
+import { protect } from "./middlewares/auth.js";
 
 const app = express();
 
-const allowedOrigins = [
+const configuredOrigins =
+  process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "";
+
+const allowedOrigins = new Set([
   "http://localhost:5173",
-  process.env.CLIENT_URL,
-].filter(Boolean);
+  ...configuredOrigins.split(",").map((origin) => origin.trim()),
+].filter(Boolean));
 
 const corsOptions = {
   origin(origin, callback) {
@@ -26,11 +30,13 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.has(origin)) {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked origin: ${origin}`));
+    const error = new Error(`CORS blocked origin: ${origin}`);
+    error.status = 403;
+    return callback(error);
   },
 
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -53,23 +59,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
-let databaseConnection;
-
 const ensureDatabaseConnection = async (req, res, next) => {
   try {
-    if (!databaseConnection) {
-      databaseConnection = connectDB().catch((error) => {
-        databaseConnection = null;
-        throw error;
-      });
-    }
-
-    await databaseConnection;
-    next();
+    await connectDB();
+    return next();
   } catch (error) {
     console.error("Database connection failed:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Database connection failed",
     });
@@ -83,27 +80,41 @@ app.get("/", (req, res) => {
   });
 });
 
-// Inngest should remain accessible without Clerk protection
-// app.use(
-//   "/api/inngest",
-//   serve({
-//     client: inngest,
-//     functions,
-//   })
-// );
+// Inngest verifies its own requests and must not use application-route auth.
+app.use(
+  "/api/inngest",
+  serve({
+    client: inngest,
+    functions,
+  })
+);
 
 // Connect to MongoDB only for application routes
-app.use("/api/user", ensureDatabaseConnection, userRouter);
-app.use("/api/post", ensureDatabaseConnection, postRouter);
-app.use("/api/story", ensureDatabaseConnection, storyRouter);
-app.use("/api/message", ensureDatabaseConnection, messageRouter);
+app.use("/api/user", protect, ensureDatabaseConnection, userRouter);
+app.use("/api/post", protect, ensureDatabaseConnection, postRouter);
+app.use("/api/story", protect, ensureDatabaseConnection, storyRouter);
+app.use("/api/message", protect, ensureDatabaseConnection, messageRouter);
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
 
 app.use((error, req, res, next) => {
   console.error("Unhandled server error:", error);
 
-  res.status(error.status || 500).json({
+  const status =
+    error.status ||
+    (error.name === "MulterError" || error instanceof SyntaxError ? 400 : 500);
+
+  res.status(status).json({
     success: false,
-    message: error.message || "Internal server error",
+    message:
+      status >= 500
+        ? "Internal server error"
+        : error.message || "Request failed",
   });
 });
 

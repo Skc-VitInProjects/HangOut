@@ -4,6 +4,7 @@ import Connection from "../models/Connection.js";
 import sendEmail from "../configs/nodeMailer.js";
 import Story from "../models/Story.js";
 import Message from "../models/Message.js";
+import connectDB from "../configs/db.js";
 
 // Create an Inngest client
 export const inngest = new Inngest({
@@ -14,11 +15,10 @@ export const inngest = new Inngest({
 const syncUserCreation = inngest.createFunction(
   {
     id: "sync-user-from-clerk",
-    triggers: {
-      event: "clerk/user.created",
-    },
+    triggers: [{ event: "clerk/user.created" }],
   },
   async ({ event }) => {
+    await connectDB();
     const {
       id,
       first_name,
@@ -49,7 +49,11 @@ const syncUserCreation = inngest.createFunction(
       username,
     };
 
-    await User.create(userData);
+    await User.findByIdAndUpdate(
+      id,
+      { $setOnInsert: userData },
+      { upsert: true, new: true, runValidators: true }
+    );
 
     return {
       success: true,
@@ -62,11 +66,10 @@ const syncUserCreation = inngest.createFunction(
 const syncUserUpdation = inngest.createFunction(
   {
     id: "update-user-from-clerk",
-    triggers: {
-      event: "clerk/user.updated",
-    },
+    triggers: [{ event: "clerk/user.updated" }],
   },
   async ({ event }) => {
+    await connectDB();
     const {
       id,
       first_name,
@@ -103,11 +106,10 @@ const syncUserUpdation = inngest.createFunction(
 const syncUserDeletion = inngest.createFunction(
   {
     id: "delete-user-with-clerk",
-    triggers: {
-      event: "clerk/user.deleted",
-    },
+    triggers: [{ event: "clerk/user.deleted" }],
   },
   async ({ event }) => {
+    await connectDB();
     const { id } = event.data;
 
     if (!id) {
@@ -127,11 +129,10 @@ const syncUserDeletion = inngest.createFunction(
 const sendNewConnectionRequestReminder = inngest.createFunction(
   {
     id: "send-new-connection-request-reminder",
-    triggers: {
-      event: "app/connection-request",
-    },
+    triggers: [{ event: "app/connection-request" }],
   },
   async ({ event, step }) => {
+    await connectDB();
     const { connectionId } = event.data;
 
     if (!connectionId) {
@@ -275,11 +276,10 @@ const sendNewConnectionRequestReminder = inngest.createFunction(
 const deleteStory = inngest.createFunction(
   {
     id: "story-delete",
-    triggers: {
-      event: "app/story.delete",
-    },
+    triggers: [{ event: "app/story.delete" }],
   },
   async ({ event, step }) => {
+    await connectDB();
     const { storyId } = event.data;
 
     if (!storyId) {
@@ -309,11 +309,10 @@ const deleteStory = inngest.createFunction(
 const sendNotificationOfUnseenMessages = inngest.createFunction(
   {
     id: "send-unseen-messages-notification",
-    triggers: {
-      cron: "TZ=America/New_York 0 9 * * *",
-    },
+    triggers: [{ cron: "TZ=America/New_York 0 9 * * *" }],
   },
   async ({ step }) => {
+    await connectDB();
     const messages = await step.run(
       "find-unseen-messages",
       async () => {

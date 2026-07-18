@@ -24,7 +24,7 @@ const connectionsSlice = createSlice({
      name: 'connections',
      initialState,
      reducers:{
-
+          resetConnections: () => initialState,
      },
      extraReducers: (builder) => {
           builder.addCase(fetchConnections.fulfilled, (state, action)=>{
@@ -39,4 +39,5 @@ const connectionsSlice = createSlice({
      }
 });
 
+export const {resetConnections} = connectionsSlice.actions
 export default connectionsSlice.reducer

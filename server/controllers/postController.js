@@ -6,7 +6,7 @@ import User from "../models/User.js";
 // Add Post
 export const addPost = async (req, res) => {
      try {
-          const { userId } = req.auth();
+          const userId = req.userId;
           const { content, post_type } = req.body;
           const images = req.files
 
@@ -38,26 +38,30 @@ export const addPost = async (req, res) => {
                )
           }
 
-        await Post.create({
+        const post = await Post.create({
            user: userId,
            content,
            image_urls,
            post_type
         })
 
-        res.json({success: true, message: "Post created successfully"});
+        const populatedPost = await post.populate('user');
+        res.status(201).json({success: true, message: "Post created successfully", post: populatedPost});
 
      } catch (error) {
           console.log(error);
-          res.json({success: false, message: error.message});
-          
+          res.status(500).json({success: false, message: 'Unable to create post'});
+     } finally {
+          for (const image of req.files || []) {
+               if (image.path && fs.existsSync(image.path)) fs.unlinkSync(image.path);
+          }
      }
 }
 
 // Get Posts
 export const getFeedPosts = async (req, res) => {
      try{
-         const {userId} = req.auth()
+         const userId = req.userId
          const user = await User.findById(userId)
 
          // User connections and followings
@@ -68,17 +72,19 @@ export const getFeedPosts = async (req, res) => {
           res.json({ success : true, posts})
      } catch (error){
           console.log(error);
-          res.json({ success: false, message: error.message});
+          res.status(500).json({ success: false, message: 'Unable to fetch feed'});
      }
 }
 
 //Like Post
 export const likePost = async (req, res) => {
      try{
-         const {userId} = req.auth()
+         const userId = req.userId
          const {postId} = req.body;
 
          const post = await Post.findById(postId)
+
+         if (!post) return res.status(404).json({success: false, message: 'Post not found'});
 
          if(post.likes_count.includes(userId)){
               post.likes_count = post.likes_count.filter(
@@ -96,6 +102,6 @@ export const likePost = async (req, res) => {
 
      } catch (error){
           console.log(error);
-          res.json({ success: false, message: error.message});
+          res.status(500).json({ success: false, message: 'Unable to update post like'});
      }
 }

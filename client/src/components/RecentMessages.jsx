@@ -33,19 +33,21 @@ const RecentMessages = () => {
       const groupedMessages = (data.messages || []).reduce(
         (accumulator, message) => {
           const senderId = message.from_user_id?._id
+          const recipientId = message.to_user_id?._id
+          const otherUserId = senderId === user?.id ? recipientId : senderId
 
-          if (!senderId) {
+          if (!otherUserId) {
             return accumulator
           }
 
-          const existingMessage = accumulator[senderId]
+          const existingMessage = accumulator[otherUserId]
 
           if (
             !existingMessage ||
             new Date(message.createdAt) >
               new Date(existingMessage.createdAt)
           ) {
-            accumulator[senderId] = message
+            accumulator[otherUserId] = message
           }
 
           return accumulator
@@ -69,7 +71,7 @@ const RecentMessages = () => {
           'Unable to fetch recent messages'
       )
     }
-  }, [getToken])
+  }, [getToken, user?.id])
 
   useEffect(() => {
     if (!user) return undefined
@@ -102,7 +104,10 @@ const RecentMessages = () => {
         no-scrollbar"
       >
         {messages.map((message) => {
-          const sender = message.from_user_id
+          const sender =
+            message.from_user_id?._id === user?.id
+              ? message.to_user_id
+              : message.from_user_id
 
           if (!sender?._id) {
             return null
@@ -144,7 +149,7 @@ const RecentMessages = () => {
                     {message.text || 'Media'}
                   </p>
 
-                  {!message.seen && (
+                  {!message.seen && message.to_user_id?._id === user?.id && (
                     <p
                       className="bg-indigo-500 text-white w-4 h-4
                       flex items-center justify-center rounded-full

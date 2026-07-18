@@ -64,7 +64,7 @@ const Connections = () => {
     getToken().then((token)=>{
          dispatch(fetchConnections(token))
     } )
-  }, [])
+  }, [dispatch, getToken])
 
   return (
     <div className='min-h-screen bg-slate-50'>

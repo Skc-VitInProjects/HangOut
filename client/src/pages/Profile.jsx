@@ -60,8 +60,14 @@ const Profile = () => {
     const userProfileId = profileId || currentUser?._id
 
     if (userProfileId) {
-      fetchUser(userProfileId)
+      const timeoutId = setTimeout(() => {
+        fetchUser(userProfileId)
+      }, 0)
+
+      return () => clearTimeout(timeoutId)
     }
+
+    return undefined
   }, [profileId, currentUser?._id, fetchUser])
 
   return user ? (
