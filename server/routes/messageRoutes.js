@@ -1,16 +1,23 @@
-import express from 'express';
-import { getChatMessages, sendMessage, sseController } from '../controllers/messageController.js';
-import {upload} from '../configs/multer.js';
-import {protect} from '../middlewares/auth.js';
-
-
+import express from "express";
+import {
+  getChatMessages,
+  sendMessage,
+  sseController,
+} from "../controllers/messageController.js";
+import { upload } from "../configs/multer.js";
+import { protect } from "../middlewares/auth.js";
 
 const messageRouter = express.Router();
 
-messageRouter.get('/:userId', sseController)
+messageRouter.get("/stream", protect, sseController);
 
-messageRouter.post('/send', upload.single('image'), protect, sendMessage)
+messageRouter.get("/:userId", protect, getChatMessages);
 
-messageRouter.post('/get', protect, getChatMessages )
+messageRouter.post(
+  "/send",
+  upload.single("image"),
+  protect,
+  sendMessage
+);
 
-export default messageRouter
+export default messageRouter;
