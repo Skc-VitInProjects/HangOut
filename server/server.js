@@ -3,8 +3,8 @@ import cors from "cors";
 import "dotenv/config";
 
 import connectDB from "./configs/db.js";
-import { inngest, functions } from "./inngest/index.js";
-import { serve } from "inngest/express";
+// import { inngest, functions } from "./inngest/index.js";
+// import { serve } from "inngest/express";
 import { clerkMiddleware } from "@clerk/express";
 
 import userRouter from "./routes/userRoutes.js";
@@ -84,13 +84,13 @@ app.get("/", (req, res) => {
 });
 
 // Inngest should remain accessible without Clerk protection
-app.use(
-  "/api/inngest",
-  serve({
-    client: inngest,
-    functions,
-  })
-);
+// app.use(
+//   "/api/inngest",
+//   serve({
+//     client: inngest,
+//     functions,
+//   })
+// );
 
 // Connect to MongoDB only for application routes
 app.use("/api/user", ensureDatabaseConnection, userRouter);
