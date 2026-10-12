@@ -1,5 +1,5 @@
 import fs from 'fs'
-import imagekit from '../configs/imageKit.js'
+import getImageKit from '../configs/imageKit.js'
 import Story from '../models/Story.js'
 import User from '../models/User.js'
 import { inngest } from '../inngest/index.js'
@@ -40,6 +40,8 @@ export const addUserStory = async (req, res) => {
           message: 'Story media type does not match the uploaded file'
         })
       }
+
+      const imagekit = getImageKit();
 
       const response = await imagekit.files.upload({
         file: fs.createReadStream(media.path),

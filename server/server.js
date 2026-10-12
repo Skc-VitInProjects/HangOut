@@ -15,22 +15,64 @@ import { protect } from "./middlewares/auth.js";
 
 const app = express();
 
-const configuredOrigins =
-  process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "";
+const normalizeOrigin = (value) =>
+  (value || "").trim().replace(/\/+$/, "").toLowerCase();
 
-const allowedOrigins = new Set([
-  "http://localhost:5173",
-  ...configuredOrigins.split(",").map((origin) => origin.trim()),
-].filter(Boolean));
+const configuredOrigins = [
+  process.env.ALLOWED_ORIGINS,
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
+]
+  .filter(Boolean)
+  .join(",");
+
+const allowedOrigins = new Set(
+  [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    ...configuredOrigins.split(","),
+  ]
+    .map(normalizeOrigin)
+    .filter(Boolean)
+);
+
+// Allow this app's Vercel deployments (production + preview) by default so a
+// deploy works without extra setup. Set CORS_ALLOW_VERCEL=false to disable,
+// or list exact origins in ALLOWED_ORIGINS for the tightest policy.
+if (process.env.CORS_ALLOW_VERCEL !== "false") {
+  allowedOrigins.add("https://hang-out*.vercel.app");
+}
+
+// Support wildcard entries such as "https://*.example.com" in ALLOWED_ORIGINS.
+const wildcardOrigins = [...allowedOrigins]
+  .filter((origin) => origin.includes("*"))
+  .map(
+    (pattern) =>
+      new RegExp(
+        `^${pattern
+          .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+          .replace(/\*/g, ".*")}$`
+      )
+  );
+
+const isOriginAllowed = (origin) => {
+  const normalized = normalizeOrigin(origin);
+
+  if (!normalized) {
+    return true;
+  }
+
+  return (
+    allowedOrigins.has(normalized) ||
+    wildcardOrigins.some((matcher) => matcher.test(normalized))
+  );
+};
 
 const corsOptions = {
   origin(origin, callback) {
     // Allows Postman, curl, Inngest and server-to-server requests
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.has(origin)) {
+    if (!origin || isOriginAllowed(origin)) {
       return callback(null, true);
     }
 
@@ -47,6 +89,8 @@ const corsOptions = {
   ],
 
   credentials: true,
+
+  maxAge: 86400,
 };
 
 // Register CORS before Clerk and all API routes

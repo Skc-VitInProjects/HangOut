@@ -1,4 +1,4 @@
-import imagekit from "../configs/imageKit.js";
+import getImageKit from "../configs/imageKit.js";
 import User from "../models/User.js";
 import Connection from "../models/Connection.js";
 import Post from "../models/Post.js"
@@ -87,44 +87,48 @@ export const updateUserData = async (req, res) => {
           const profile = req.files.profile && req.files.profile[0];
           const cover = req.files.cover && req.files.cover[0];
 
-          if (profile) {
-               const buffer = fs.readFileSync(profile.path)
-               const response = await imagekit.files.upload({
-                    file: buffer,
-                    fileName: profile.originalname,
-               })
+          if (profile || cover) {
+               const imagekit = getImageKit();
 
-               const url = imagekit.url({
-                    path: response.filePath,
-                    transformation: [
-                         { quality: 'auto' },
-                         { format: 'webp' },
-                         { width: '512' },
+               if (profile) {
+                    const buffer = fs.readFileSync(profile.path)
+                    const response = await imagekit.files.upload({
+                         file: buffer,
+                         fileName: profile.originalname,
+                    })
 
-                    ]
-               })
+                    const url = imagekit.url({
+                         path: response.filePath,
+                         transformation: [
+                              { quality: 'auto' },
+                              { format: 'webp' },
+                              { width: '512' },
 
-               updatedData.profile_picture = url;
-          }
+                         ]
+                    })
 
-          if (cover) {
-               const buffer = fs.readFileSync(cover.path)
-               const response = await imagekit.files.upload({
-                    file: buffer,
-                    fileName: cover.originalname,
-               })
+                    updatedData.profile_picture = url;
+               }
 
-               const url = imagekit.url({
-                    path: response.filePath,
-                    transformation: [
-                         { quality: 'auto' },
-                         { format: 'webp' },
-                         { width: '1280' },
+               if (cover) {
+                    const buffer = fs.readFileSync(cover.path)
+                    const response = await imagekit.files.upload({
+                         file: buffer,
+                         fileName: cover.originalname,
+                    })
 
-                    ]
-               })
+                    const url = imagekit.url({
+                         path: response.filePath,
+                         transformation: [
+                              { quality: 'auto' },
+                              { format: 'webp' },
+                              { width: '1280' },
 
-               updatedData.cover_photo = url;
+                         ]
+                    })
+
+                    updatedData.cover_photo = url;
+               }
           }
 
           const user = await User.findByIdAndUpdate(userId, updatedData, { new: true });

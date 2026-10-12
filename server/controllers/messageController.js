@@ -1,5 +1,5 @@
 import fs from 'fs';
-import imagekit from "../configs/imageKit.js";
+import getImageKit from "../configs/imageKit.js";
 import Message from '../models/Message.js';
 import User from '../models/User.js';
 
@@ -35,6 +35,8 @@ export const sendMessage = async (req, res) => {
        let message_type = image ? 'image' : 'text';
 
        if(message_type === 'image'){
+          const imagekit = getImageKit();
+
           const fileBuffer = fs.readFileSync(image.path);
           const response =  await imagekit.files.upload({
                file: fileBuffer,
