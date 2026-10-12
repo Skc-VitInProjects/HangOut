@@ -37,11 +37,13 @@ const allowedOrigins = new Set(
     .filter(Boolean)
 );
 
-// Allow this app's Vercel deployments (production + preview) by default so a
-// deploy works without extra setup. Set CORS_ALLOW_VERCEL=false to disable,
+// Allow any Vercel deployment (production + preview) as a frontend origin by
+// default so deploys work without extra setup. Preview URLs use the format
+// "{project}-{commit-hash}-{team}.vercel.app" which changes on every push, so a
+// fixed allow-list would break them. Set CORS_ALLOW_VERCEL=false to disable,
 // or list exact origins in ALLOWED_ORIGINS for the tightest policy.
 if (process.env.CORS_ALLOW_VERCEL !== "false") {
-  allowedOrigins.add("https://hang-out*.vercel.app");
+  allowedOrigins.add("https://*.vercel.app");
 }
 
 // Support wildcard entries such as "https://*.example.com" in ALLOWED_ORIGINS.
